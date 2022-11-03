@@ -1,36 +1,31 @@
 package web.dao;
 
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import web.model.User;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import java.util.List;
 
 @Component
-public class UserDaoImpl implements UserDao{
+public class UserDaoImpl implements UserDao {
 
-    private SessionFactory sessionFactory;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public UserDaoImpl(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
     @Transactional(readOnly = true)
     @Override
     public List<User> getAllUsers() {
-        TypedQuery<User> query = sessionFactory.getCurrentSession().createQuery("from User");
+        TypedQuery<User> query = entityManager.createQuery("select a from User a", User.class);
         return query.getResultList();
     }
 
     @Transactional
     @Override
     public void saveUser(String name, String lastName, int age) {
-        sessionFactory.getCurrentSession().save(new User(name, lastName, age));
-
+        entityManager.persist(new User(name, lastName, age));
     }
 
     @Transactional
@@ -41,15 +36,16 @@ public class UserDaoImpl implements UserDao{
         userToBeUpdated.setLastname(updatedUser.getLastname());
         userToBeUpdated.setAge(updatedUser.getAge());
     }
+
     @Transactional(readOnly = true)
     @Override
     public User findUserById(long id) {
-        return  sessionFactory.getCurrentSession().get(User.class, id);
+        return entityManager.find(User.class, id);
     }
+
     @Transactional
     @Override
     public void removeUserById(long id) {
-        Session session = sessionFactory.getCurrentSession();
-        session.remove(session.get(User.class, id));
+        entityManager.remove(entityManager.find(User.class, id));
     }
 }
